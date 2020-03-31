@@ -5,12 +5,12 @@ from datetime import datetime
 import quandl
 
 
-path = "/Users/xavier/Downloads/intraQuarter"
+intraQuater_path = "Users/xavier/Programming/Python/SVM/intraQuarter"
 # quandl.ApiConfig.api_key = "jk6Dsp3Em-Y9n54znX9e"
 # data = quandl.get("YALE/SPCOMP", authtoken="jk6Dsp3Em-Y9n54znX9e", start_date = "2005-1-1", end_date="2019-12-31")
 
 def Key_Stats(gather = "Total Debt/Equity (mrq)"):
-    statspath = path+'/_KeyStats'
+    statspath = intraQuater_path + '/_KeyStats'
     #get the root for every traversal
     #OS.WALK is a tree traversal
     stock_list = [x[0] for x in os.walk(statspath)]
