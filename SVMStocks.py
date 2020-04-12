@@ -1,4 +1,3 @@
-import pandas as pd
 import os
 import time
 from datetime import datetime
@@ -7,21 +6,136 @@ import urllib
 import quandl
 
 from time import mktime
+from sklearn import svm, preprocessing
+import pandas as pd
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import style
-
 style.use("dark_background")
+
 
 #change this path to wherever this intraquarterfile is
 intraQuarter_path = "/Users/xavier/Programming/Python/SVM/intraQuarter"
 
-
-# quandl.ApiConfig.api_key = "jk6Dsp3Em-Y9n54znX9e"
+auth_token = quandl.ApiConfig.api_key = "jk6Dsp3Em-Y9n54znX9e"
 # data = quandl.get("YALE/SPCOMP", authtoken="jk6Dsp3Em-Y9n54znX9e", start_date = "2005-1-1", end_date="2019-12-31")
+FEATURES =  ['DE Ratio',
+             'Trailing P/E',
+             'Price/Sales',
+             'Price/Book',
+             'Profit Margin',
+             'Operating Margin',
+             'Return on Assets',
+             'Return on Equity',
+             'Revenue Per Share',
+             'Market Cap',
+             'Enterprise Value',
+             'Forward P/E',
+             'PEG Ratio',
+             'Enterprise Value/Revenue',
+             'Enterprise Value/EBITDA',
+             'Revenue',
+             'Gross Profit',
+             'EBITDA',
+             'Net Income Avl to Common ',
+             'Diluted EPS',
+             'Earnings Growth',
+             'Revenue Growth',
+             'Total Cash',
+             'Total Cash Per Share',
+             'Total Debt',
+             'Current Ratio',
+             'Book Value Per Share',
+             'Cash Flow',
+             'Beta',
+             'Held by Insiders',
+             'Held by Institutions',
+             'Shares Short (as of',
+             'Short Ratio',
+             'Short % of Float',
+             'Shares Short (prior ']
+
+
+def Build_Data_Set():
+    data_df = pd.DataFrame.from_csv("key_stats.csv")
+
+    data_df = data_df.reindex(np.random.permutation(data_df.index))
+
+    X = np.array(data_df[FEATURES].values)  # .tolist())
+
+    y = (data_df["Status"]
+         .replace("underperform", 0)
+         .replace("outperform", 1)
+         .values.tolist())
+
+    X = preprocessing.scale(X)
+
+    return X, y
+
+
+def Analysis():
+    test_size = 1000
+    X, y = Build_Data_Set()
+    print(len(X))
+
+    clf = svm.SVC(kernel="linear", C=1.0)
+    clf.fit(X[:-test_size], y[:-test_size])
+
+    correct_count = 0
+
+    for x in range(1, test_size + 1):
+        if clf.predict(X[-x])[0] == y[-x]:
+            correct_count += 1
+
+    print("Accuracy:", (correct_count / test_size) * 100.00)
+
+#need to randomize data set if not the training set is going to be monotonic as our files are in alphabetical order
+def Randomizing():
+    df = pd.DataFrame({"D1":range(5), "D2":range(5)})
+    print(df)
+    df2 = df.reindex(np.random.permutation(df.index))
+    print(df2)
+
+def Stock_Prices():
+    df = pd.DataFrame()
+
+    statspath = intraQuarter_path+'/_KeyStats'
+    stock_list = [x[0] for x in os.walk(statspath)]
+
+    print(stock_list)
+
+    for each_dir in stock_list[1:]:
+        try:
+            ticker = each_dir.split("\\")[1]
+            print(ticker)
+            name = "WIKI/"+ticker.upper()
+            data = quandl.get(name,
+                              trim_start = "2000-12-12",
+                              trim_end = "2014-12-30",
+                              authtoken=auth_token)
+            data[ticker.upper()] = data["Adj. Close"]
+            df = pd.concat([df, data[ticker.upper()]], axis = 1)
+        except Exception as e:
+            print(str(e))
+            time.sleep(10)
+        try:
+            ticker = each_dir.split("\\")[1]
+            print(ticker)
+            name = "WIKI/"+ticker.upper()
+            data = Quandl.get(name,
+                              trim_start = "2000-12-12",
+                              trim_end = "2014-12-30",
+                              authtoken=auth_tok)
+            data[ticker.upper()] = data["Adj. Close"]
+            df = pd.concat([df, data[ticker.upper()]], axis = 1)
+        except Exception as e:
+            print(str(e))
+    df.to_csv("stock_prices.csv")
 
 def Key_Stats(gather=None):
     if gather is None:
+        #features
         gather = ["Total Debt/Equity",
                   'Trailing P/E',
                   'Price/Sales',
@@ -65,49 +179,49 @@ def Key_Stats(gather=None):
     # percentage change is more, than the label is out-perform.
     df = pd.DataFrame(
         columns=['Date',
-                                 'Unix',
-                                 'Ticker',
-                                 'Price',
-                                 'stock_p_change',
-                                 'SP500',
-                                 'sp500_p_change',
-                                 'Difference',
-                                 'DE Ratio',
-                                 'Trailing P/E',
-                                 'Price/Sales',
-                                 'Price/Book',
-                                 'Profit Margin',
-                                 'Operating Margin',
-                                 'Return on Assets',
-                                 'Return on Equity',
-                                 'Revenue Per Share',
-                                 'Market Cap',
-                                 'Enterprise Value',
-                                 'Forward P/E',
-                                 'PEG Ratio',
-                                 'Enterprise Value/Revenue',
-                                 'Enterprise Value/EBITDA',
-                                 'Revenue',
-                                 'Gross Profit',
-                                 'EBITDA',
-                                 'Net Income Avl to Common ',
-                                 'Diluted EPS',
-                                 'Earnings Growth',
-                                 'Revenue Growth',
-                                 'Total Cash',
-                                 'Total Cash Per Share',
-                                 'Total Debt',
-                                 'Current Ratio',
-                                 'Book Value Per Share',
-                                 'Cash Flow',
-                                 'Beta',
-                                 'Held by Insiders',
-                                 'Held by Institutions',
-                                 'Shares Short (as of',
-                                 'Short Ratio',
-                                 'Short % of Float',
-                                 'Shares Short (prior ',
-                                 'Status'])
+                 'Unix',
+                 'Ticker',
+                 'Price',
+                 'stock_p_change',
+                 'SP500',
+                 'sp500_p_change',
+                 'Difference',
+                 'DE Ratio',
+                 'Trailing P/E',
+                 'Price/Sales',
+                 'Price/Book',
+                 'Profit Margin',
+                 'Operating Margin',
+                 'Return on Assets',
+                 'Return on Equity',
+                 'Revenue Per Share',
+                 'Market Cap',
+                 'Enterprise Value',
+                 'Forward P/E',
+                 'PEG Ratio',
+                 'Enterprise Value/Revenue',
+                 'Enterprise Value/EBITDA',
+                 'Revenue',
+                 'Gross Profit',
+                 'EBITDA',
+                 'Net Income Avl to Common ',
+                 'Diluted EPS',
+                 'Earnings Growth',
+                 'Revenue Growth',
+                 'Total Cash',
+                 'Total Cash Per Share',
+                 'Total Debt',
+                 'Current Ratio',
+                 'Book Value Per Share',
+                 'Cash Flow',
+                 'Beta',
+                 'Held by Insiders',
+                 'Held by Institutions',
+                 'Shares Short (as of',
+                 'Short Ratio',
+                 'Short % of Float',
+                 'Shares Short (prior ',
+                 'Status'])
 
     sp500_df = pd.read_csv("/Users/xavier/Programming/Python/SVM/YAHOO-INDEX_GSPC.csv")
     ticker_list = []
@@ -272,25 +386,25 @@ def Key_Stats(gather=None):
 
 
 
-    # for each_ticker in ticker_list:
-    #     try:
-    #         plot_df = df[(df['Ticker'] == each_ticker)]
-    #
-    #         plot_df = plot_df.set_index(['Date'])
-    #
-    #         if plot_df['Status'][-1] == 'underperform':
-    #             color = 'r'
-    #         else:
-    #             color = 'g'
-    #
-    #         plot_df['Difference'].plot(label=each_ticker, color=color)
-    #         plt.legend()
-    #     except Exception as e:
-    #         print(str(e))
-    # plt.show()
+    for each_ticker in ticker_list:
+        try:
+            plot_df = df[(df['Ticker'] == each_ticker)]
+
+            plot_df = plot_df.set_index(['Date'])
+
+            if plot_df['Status'][-1] == 'underperform':
+                color = 'r'
+            else:
+                color = 'g'
+
+            plot_df['Difference'].plot(label=each_ticker, color=color)
+            plt.legend()
+        except Exception as e:
+            print(str(e))
+    plt.show()
     # saving the values into a csv file
-    # save = gather.replace(' ', '').replace(')', '').replace('(', '').replace('/', '') + ('.csv')
-    # print(save)
+    save = gather.replace(' ', '').replace(')', '').replace('(', '').replace('/', '') + ('.csv')
+    print(save)
     df.to_csv("key_stats.csv")
 
 
